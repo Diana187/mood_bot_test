@@ -48,9 +48,6 @@ def callbeck_inline_mood(call):
                 bot.send_message(call.message.chat.id, 'Хорошо, что всё нормально!')
             elif call.data == 'bad':
                 bot.send_message(call.message.chat.id, 'Мне очень жаль(')
-            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="😊 Как дела?",
-            reply_markup=None)
-
             bot.answer_callback_query(callback_query_id=call.id, show_alert=True,
                 text='Я напомню тебе, когда придёт время отметить настроение.')
     except Exception as error:
@@ -58,25 +55,18 @@ def callbeck_inline_mood(call):
 
 
 def notification_message(message):
-    print('Как ты сегодня?', message)
-    return
+    bot.send_message(message.chat.id, text='Как ты сегодня?')
 
-# schedule.every().day.at("11:35").do(notification_message)
-
-# @bot.message_handler(func=lambda message: message.text == 'Настроение')
-# def notification_message(message):
-    # pass
-
-
-def scheduled_notification():
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+# def scheduled_notification():
+#     while True:
+#         schedule.run_pending()
+#         time.sleep(1)
 
 if __name__ == '__main__':
-    schedule.every().day.at("11:51").do(notification_message)
+    schedule.every().day.at("12:04").do(notification_message)
 
-#     notification_thread = threading.Thread(target=scheduled_notification)
-#     notification_thread.start()
+
+    # notification_thread = threading.Thread(target=scheduled_notification)
+    # notification_thread.start()
     
     bot.polling(none_stop=True, interval=0)

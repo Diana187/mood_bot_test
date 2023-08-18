@@ -57,8 +57,9 @@ def callbeck_inline_mood(call):
         print(repr(error))
 
 
-def notification_message():
-    print('Как ты сегодня?')
+def notification_message(message):
+    print('Как ты сегодня?', message)
+    return
 
 # schedule.every().day.at("11:35").do(notification_message)
 
@@ -67,13 +68,13 @@ def notification_message():
     # pass
 
 
-# def scheduled_notification():
-#     while True:
-#         schedule.run_pending()
-#         time.sleep(1)
+def scheduled_notification():
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 if __name__ == '__main__':
-    schedule.every().day.at("11:45").do(notification_message)
+    schedule.every().day.at("11:51").do(notification_message)
 
 #     notification_thread = threading.Thread(target=scheduled_notification)
 #     notification_thread.start()

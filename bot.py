@@ -7,6 +7,17 @@ from config import API_TOKEN
 
 bot = telebot.TeleBot(API_TOKEN)
 
+"""Создаём соединение и курсор."""
+conn = sqlite3.connect('moodbase.sql')
+cur = conn.cursor()
+
+"""Создаём таблицу 'moodbase.sql' с полями id, response, если она ещё не существует."""
+cur.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, response TEXT)')
+
+conn.commit()
+cur.close()
+conn.close()
+
 """Функция обработки команды start."""
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -17,26 +28,17 @@ def start(message):
     markup.add(btn1, btn2)
     bot.send_message(message.chat.id, mess, reply_markup=markup)
 
-    """Создаём соединение и курсор."""
     conn = sqlite3.connect('moodbase.sql')
     cur = conn.cursor()
 
-    user_id = message.from_user.id
-    answer = message.text
+    response = message.text
 
-    """Создаём таблицу 'moodbase.sql' с полями id, answer, если она ещё не существует."""
-    cur.execute('INSERT INTO users (id, answer) VALUES (?, ?)', (user_id, answer))
+    """Создаём соединение и курсор."""
+    cur.execute('INSERT INTO users (response) VALUES (?)', (response,))
+
     conn.commit()
-
     cur.close()
     conn.close()
-
-    # if cur.fetchone() is None:
-    #     cur.execute(f"INSERT INTO users VALUES(?,?,?)", (message.chat.id, message.from_user.username, 0))
-    #     conn.commit()
-    # else:
-    #     for value in cur.execute("SELECT * FROM users"):
-    #         print(value) 
 
 """Обработка остальных текстовых сообщений."""
 @bot.message_handler(content_types=['text'])

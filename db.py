@@ -1,18 +1,11 @@
-# import telebot
+import telebot
 import sqlite3
-# import schedule
-# from telebot import types
+import schedule
+from telebot import types
 
-# from config import API_TOKEN
+from config import API_TOKEN
 
-# bot = telebot.TeleBot(API_TOKEN)
-
-# @bot.message_handler(commands=['start'])
-# def handle_start(message):
-#     bot.reply_to(
-#         message,
-#         'Привет! Я бот-трекер настроения. Чтобы оставить запись о своем настроении, введи /mood.'
-    # )
+bot = telebot.TeleBot(API_TOKEN)
 
 @bot.message_handler(commands=['mood'])
 def mood_answer(message):
@@ -28,15 +21,15 @@ def mood_answer(message):
     cur.close()
     conn.close()
 
-def mood_question(message):
-    keyboard = types.InlineKeyboardMarkup()
-    key_yes = types.InlineKeyboardButton(text='Да', callback_data='yes')
-    keyboard.add(key_yes)
-    key_no= types.InlineKeyboardButton(text='Нет', callback_data='no')
-    keyboard.add(key_no)
-    bot.send_message(message.chat.id, 'Как твоё настроение сегодня? Оцени своё настроение от -3 до +3.')
+# def mood_question(message):
+#     keyboard = types.InlineKeyboardMarkup()
+#     key_yes = types.InlineKeyboardButton(text='Да', callback_data='yes')
+#     keyboard.add(key_yes)
+#     key_no= types.InlineKeyboardButton(text='Нет', callback_data='no')
+#     keyboard.add(key_no)
+#     bot.send_message(message.chat.id, 'Как твоё настроение сегодня? Оцени своё настроение от -3 до +3.')
 
-    schedule.every().day.at("12:44").do(mood_question)
+#     schedule.every().day.at("12:44").do(mood_question)
 
 # @bot.callback_query_handler(func=lambda call: True)
 # def callback_answer(call):

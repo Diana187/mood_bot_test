@@ -1,13 +1,13 @@
 import telebot
+import sqlite3
 from telebot import types
-import schedule, time
-import threading
+
 
 from config import API_TOKEN
 
 bot = telebot.TeleBot(API_TOKEN)
 
-"""Обработка входящего сообщения start."""
+"""Функция обработки команды start."""
 @bot.message_handler(commands=['start'])
 def start(message):
     mess = f'Привет, {message.from_user.first_name}! Я бот-трекер настроения.'
@@ -17,12 +17,34 @@ def start(message):
     markup.add(btn1, btn2)
     bot.send_message(message.chat.id, mess, reply_markup=markup)
 
+    """Создаём соединение и курсор."""
+    conn = sqlite3.connect('moodbase.sql')
+    cur = conn.cursor()
+
+    user_id = message.from_user.id
+    answer = message.text
+
+    """Создаём таблицу 'moodbase.sql' с полями id, answer, если она ещё не существует."""
+    cur.execute('INSERT INTO users (id, answer) VALUES (?, ?)', (user_id, answer))
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+    # if cur.fetchone() is None:
+    #     cur.execute(f"INSERT INTO users VALUES(?,?,?)", (message.chat.id, message.from_user.username, 0))
+    #     conn.commit()
+    # else:
+    #     for value in cur.execute("SELECT * FROM users"):
+    #         print(value) 
+
+"""Обработка остальных текстовых сообщений."""
 @bot.message_handler(content_types=['text'])
-def get_user_messages(message):
+def get_user_messages(message):   
     if message.text == '👋 Привет!':
         bot.send_message(
             message.chat.id,
-            'Приятно познакомиться. Я помогу тебе следить за настроением)'
+            'Приятно познакомиться. Я помогу следить за твоим самочувствием)'
         )
     elif message.text == 'Настроение':
         mess = f'{message.from_user.first_name}! Как твоё настроение сегодня?'
@@ -38,6 +60,7 @@ def get_user_messages(message):
             'Я тебя не понимаю('
         )
 
+"""Обработка callback-запросов."""
 @bot.callback_query_handler(func=lambda call:True)
 def callbeck_inline_mood(call):
     try:
@@ -53,20 +76,6 @@ def callbeck_inline_mood(call):
     except Exception as error:
         print(repr(error))
 
-
-def notification_message(message):
-    bot.send_message(message.chat.id, text='Как ты сегодня?')
-
-# def scheduled_notification():
-#     while True:
-#         schedule.run_pending()
-#         time.sleep(1)
-
+"""Запуск планировщика в основном потоке."""
 if __name__ == '__main__':
-    schedule.every().day.at("12:04").do(notification_message)
-
-
-    # notification_thread = threading.Thread(target=scheduled_notification)
-    # notification_thread.start()
-    
     bot.polling(none_stop=True, interval=0)

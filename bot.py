@@ -32,15 +32,21 @@ def start(message):
     cur = conn.cursor()
 
     response = message.text
+    user_id = message.chat.id
 
     """Создаём соединение и курсор."""
-    cur.execute('INSERT INTO users (response) VALUES (?)', (response,))
+    cur.execute('INSERT INTO users (id, response) VALUES (?, ?)', (user_id, response,))
 
     conn.commit()
     cur.close()
     conn.close()
 
-"""Обработка остальных текстовых сообщений."""
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton('Посмотреть моё настроение.', callback_data='mood'))
+    bot.send_message(message.chat.id, 'Записал твоё настроение.', reply_markup=markup)
+
+
+"""Обработка текстовых сообщений."""
 @bot.message_handler(content_types=['text'])
 def get_user_messages(message):   
     if message.text == '👋 Привет!':
@@ -78,6 +84,6 @@ def callbeck_inline_mood(call):
     except Exception as error:
         print(repr(error))
 
-"""Запуск планировщика в основном потоке."""
+"""Запуск в основном потоке."""
 if __name__ == '__main__':
     bot.polling(none_stop=True, interval=0)

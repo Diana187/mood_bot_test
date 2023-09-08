@@ -18,10 +18,11 @@ conn.commit()
 cur.close()
 conn.close()
 
-"""Функция обработки команды start."""
+"""Хендлер и функция для обработки команды /start"""
 @bot.message_handler(commands=['start'])
 def start(message):
-    mess = f'Привет, {message.from_user.first_name}! Я бот-трекер настроения.'
+    mess = f'Привет, {message.from_user.first_name}! Я бот-трекер настроения!'
+    """Cоздаём кнопки бота"""
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton("👋 Привет!")
     btn2 = types.KeyboardButton("Настроение")
@@ -46,13 +47,13 @@ def start(message):
     bot.send_message(message.chat.id, 'Записал твоё настроение.', reply_markup=markup)
 
 
-"""Обработка текстовых сообщений."""
+"""Хендлер и функция для обработки нажатий кнопок."""
 @bot.message_handler(content_types=['text'])
 def get_user_messages(message):   
     if message.text == '👋 Привет!':
         bot.send_message(
             message.chat.id,
-            'Приятно познакомиться. Я помогу следить за твоим самочувствием)'
+            'Приятно познакомиться. Я помогу следить за твоим самочувствием!'
         )
     elif message.text == 'Настроение':
         mess = f'{message.from_user.first_name}! Как твоё настроение сегодня?'
@@ -83,6 +84,23 @@ def callbeck_inline_mood(call):
                 text='Я напомню тебе, когда придёт время отметить настроение.')
     except Exception as error:
         print(repr(error))
+    
+    conn = sqlite3.connect('moodbase.sql')
+    cur = conn.cursor()
+
+    """Создаём соединение и курсор."""
+    cur.execute('SELECT * FROM users')
+    users = cur.fetchall()
+
+    info_mood = ''
+    for element in users:
+        info_mood += f'{element[1]}'
+
+    cur.close()
+    conn.close()
+
+    bot.send_message(call.message.chat.id, info_mood)
+
 
 """Запуск в основном потоке."""
 if __name__ == '__main__':

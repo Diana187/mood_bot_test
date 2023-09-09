@@ -7,16 +7,20 @@ from config import API_TOKEN
 
 bot = telebot.TeleBot(API_TOKEN)
 
-"""Создаём соединение и курсор."""
-conn = sqlite3.connect('moodbase.sql')
-cur = conn.cursor()
+def setup_database():
+    """Создаём соединение и курсор."""
+    conn = sqlite3.connect('moodbase.sql')
+    cur = conn.cursor()
 
-"""Создаём таблицу 'moodbase.sql' с полями id, response, если она ещё не существует."""
-cur.execute('CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, response TEXT)')
+    """Создаём таблицу 'moodbase.sql' с полями id, если она ещё не существует."""
+    cur.execute('CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY)')
+    cur.execute("""CREATE TABLE IF NOT EXISTS mood_responses
+                (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id  INTEGER, response TEXT)""")
+    
 
-conn.commit()
-cur.close()
-conn.close()
+    conn.commit()
+    cur.close()
+    conn.close()
 
 """Хендлер и функция для обработки команды /start"""
 @bot.message_handler(commands=['start'])
@@ -32,11 +36,14 @@ def start(message):
     conn = sqlite3.connect('moodbase.sql')
     cur = conn.cursor()
 
-    response = message.text
     user_id = message.chat.id
 
     """Создаём соединение и курсор."""
-    cur.execute('INSERT INTO users (id, response) VALUES (?, ?)', (user_id, response,))
+    cur.execute(f'SELECT * FROM users WHERE user_id={user_id}')
+    users = cur.fetchall()
+
+    if len(users) == 0:
+        cur.execute('INSERT INTO users (user_id) VALUES (?)', (user_id,))
 
     conn.commit()
     cur.close()
@@ -88,20 +95,16 @@ def callbeck_inline_mood(call):
     conn = sqlite3.connect('moodbase.sql')
     cur = conn.cursor()
 
-    """Создаём соединение и курсор."""
-    cur.execute('SELECT * FROM users')
-    users = cur.fetchall()
+    user_id = call.message.chat.id
+    response = call.data
 
-    info_mood = ''
-    for element in users:
-        info_mood += f'{element[1]}'
+    cur.execute('INSERT INTO mood_responses (user_id, response) VALUES (?, ?)', (user_id, response))
 
     cur.close()
     conn.close()
 
-    bot.send_message(call.message.chat.id, info_mood)
-
 
 """Запуск в основном потоке."""
 if __name__ == '__main__':
+    setup_database()
     bot.polling(none_stop=True, interval=0)

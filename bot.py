@@ -68,7 +68,7 @@ def get_user_messages(message):
         markup.add(item1, item2, item3)
         bot.send_message(message.chat.id, mess, reply_markup=markup)
     elif message.text == 'Показать настроение':
-        bot.send_message(message.chat.id, 'Вот информация о твоём настроении:')
+        handle_show(message)
     else: 
         bot.send_message(
             message.chat.id,
@@ -94,17 +94,14 @@ def handle_mood(call):
     cur.close()
     conn.close()
 
-def handle_show():
-    print('lala')
+def handle_show(message):
+    bot.send_message(message.chat.id, 'Вот информация о твоём настроении:')
 
 """Обработка callback-запросов."""
 @bot.callback_query_handler(func=lambda call:True)
 def callback_inline(call):
     if call.data in ['good', 'normal', 'bad']:
         handle_mood(call)
-    elif call.data == 'show':
-        print(call.data)
-        handle_show(call)
 
 
 """Запуск в основном потоке."""

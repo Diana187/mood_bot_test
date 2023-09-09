@@ -72,21 +72,13 @@ def get_user_messages(message):
             'Я тебя не понимаю('
         )
 
-"""Обработка callback-запросов."""
-@bot.callback_query_handler(func=lambda call:True)
-def callbeck_inline_mood(call):
-    try:
-        if call.message:
-            if call.data == 'good':
-                bot.send_message(call.message.chat.id, 'Это замечательно!')
-            elif call.data == 'normal':
-                bot.send_message(call.message.chat.id, 'Хорошо, что всё нормально!')
-            elif call.data == 'bad':
-                bot.send_message(call.message.chat.id, 'Мне очень жаль(')
-            bot.answer_callback_query(callback_query_id=call.id, show_alert=True,
-                text='Я напомню тебе, когда придёт время отметить настроение.')
-    except Exception as error:
-        print(repr(error))
+def handle_mood(call):
+    if call.data == 'good':
+        bot.send_message(call.message.chat.id, 'Это замечательно!')
+    elif call.data == 'normal':
+        bot.send_message(call.message.chat.id, 'Хорошо, что всё нормально!')
+    elif call.data == 'bad':
+        bot.send_message(call.message.chat.id, 'Мне очень жаль(')
     
     conn = sqlite3.connect('moodbase.sql')
     cur = conn.cursor()
@@ -98,6 +90,11 @@ def callbeck_inline_mood(call):
 
     cur.close()
     conn.close()
+
+"""Обработка callback-запросов."""
+@bot.callback_query_handler(func=lambda call:True)
+def callback_inline(call):
+    handle_mood(call)
 
 
 """Запуск в основном потоке."""

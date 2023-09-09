@@ -68,7 +68,6 @@ def get_user_messages(message):
         markup.add(item1, item2, item3)
         bot.send_message(message.chat.id, mess, reply_markup=markup)
     elif message.text == 'Показать настроение':
-        # почему здесь нужна отдельная функция?
         handle_show(message)
     else: 
         bot.send_message(
@@ -94,6 +93,7 @@ def handle_mood(call):
     """Записываем ответы в базу данных."""
     cur.execute('INSERT INTO mood_responses (user_id, response) VALUES (?, ?)', (user_id, response))
 
+    conn.commit()
     cur.close()
     conn.close()
 
@@ -109,10 +109,13 @@ def handle_show(message):
     cur.execute(f'SELECT response FROM mood_responses WHERE user_id={user_id}')
     mood_responses = cur.fetchall()
 
-    mood_responses #тут надо как-то достать ответы?
-
+    mood_responses()
     cur.close()
     conn.close()
+
+def send_mood_count():
+
+    pass
 
 """Обработка callback-запроса."""
 @bot.callback_query_handler(func=lambda call:True)

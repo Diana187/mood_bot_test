@@ -46,7 +46,8 @@ def start(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton("👋 Привет!")
     btn2 = types.KeyboardButton("Настроение")
-    markup.add(btn1, btn2)
+    btn3 = types.KeyboardButton("Показать настроение")
+    markup.add(btn1, btn2, btn3)
     bot.send_message(message.chat.id, mess, reply_markup=markup)
 
 
@@ -66,6 +67,8 @@ def get_user_messages(message):
         item3 = types.InlineKeyboardButton("Плохо", callback_data='bad')
         markup.add(item1, item2, item3)
         bot.send_message(message.chat.id, mess, reply_markup=markup)
+    elif message.text == 'Показать настроение':
+        bot.send_message(message.chat.id, 'Вот информация о твоём настроении:')
     else: 
         bot.send_message(
             message.chat.id,
@@ -78,7 +81,7 @@ def handle_mood(call):
     elif call.data == 'normal':
         bot.send_message(call.message.chat.id, 'Хорошо, что всё нормально!')
     elif call.data == 'bad':
-        bot.send_message(call.message.chat.id, 'Мне очень жаль(')
+        bot.send_message(call.message.chat.id, 'Мне очень жаль.')
     
     conn = sqlite3.connect('moodbase.sql')
     cur = conn.cursor()
@@ -91,10 +94,17 @@ def handle_mood(call):
     cur.close()
     conn.close()
 
+def handle_show():
+    print('lala')
+
 """Обработка callback-запросов."""
 @bot.callback_query_handler(func=lambda call:True)
 def callback_inline(call):
-    handle_mood(call)
+    if call.data in ['good', 'normal', 'bad']:
+        handle_mood(call)
+    elif call.data == 'show':
+        print(call.data)
+        handle_show(call)
 
 
 """Запуск в основном потоке."""

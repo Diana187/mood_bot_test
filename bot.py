@@ -34,6 +34,7 @@ def start(message):
     cur.execute(f'SELECT * FROM users WHERE user_id={user_id}')
     users = cur.fetchall()
 
+    """???"""
     if len(users) == 0:
         cur.execute('INSERT INTO users (user_id) VALUES (?)', (user_id,))
 
@@ -41,7 +42,7 @@ def start(message):
     cur.close()
     conn.close()
 
-    
+    """Создаём кнопки клавиатуры."""
     mess = f'Привет, {message.from_user.first_name}! Я бот-трекер настроения!'
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     btn1 = types.KeyboardButton("👋 Привет!")
@@ -49,7 +50,6 @@ def start(message):
     btn3 = types.KeyboardButton("Показать настроение")
     markup.add(btn1, btn2, btn3)
     bot.send_message(message.chat.id, mess, reply_markup=markup)
-
 
 """Хендлер и функция для обработки нажатий кнопок."""
 @bot.message_handler(content_types=['text'])
@@ -68,6 +68,7 @@ def get_user_messages(message):
         markup.add(item1, item2, item3)
         bot.send_message(message.chat.id, mess, reply_markup=markup)
     elif message.text == 'Показать настроение':
+        # почему здесь нужна отдельная функция?
         handle_show(message)
     else: 
         bot.send_message(
@@ -75,6 +76,7 @@ def get_user_messages(message):
             'Я тебя не понимаю('
         )
 
+"""Обработка ответов на нажатие инлайн кнопок."""
 def handle_mood(call):
     if call.data == 'good':
         bot.send_message(call.message.chat.id, 'Это замечательно!')
@@ -89,6 +91,7 @@ def handle_mood(call):
     user_id = call.message.chat.id
     response = call.data
 
+    """Записываем ответы в базу данных."""
     cur.execute('INSERT INTO mood_responses (user_id, response) VALUES (?, ?)', (user_id, response))
 
     cur.close()
@@ -97,12 +100,25 @@ def handle_mood(call):
 def handle_show(message):
     bot.send_message(message.chat.id, 'Вот информация о твоём настроении:')
 
-"""Обработка callback-запросов."""
+    conn = sqlite3.connect('moodbase.sql')
+    cur = conn.cursor()
+
+    user_id = message.chat.id
+
+    """Достаём ответы из базы данных."""
+    cur.execute(f'SELECT response FROM mood_responses WHERE user_id={user_id}')
+    mood_responses = cur.fetchall()
+
+    mood_responses #тут надо как-то достать ответы?
+
+    cur.close()
+    conn.close()
+
+"""Обработка callback-запроса."""
 @bot.callback_query_handler(func=lambda call:True)
 def callback_inline(call):
     if call.data in ['good', 'normal', 'bad']:
         handle_mood(call)
-
 
 """Запуск в основном потоке."""
 if __name__ == '__main__':

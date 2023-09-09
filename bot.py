@@ -25,14 +25,6 @@ def setup_database():
 """Хендлер и функция для обработки команды /start"""
 @bot.message_handler(commands=['start'])
 def start(message):
-    mess = f'Привет, {message.from_user.first_name}! Я бот-трекер настроения!'
-    """Cоздаём кнопки бота"""
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn1 = types.KeyboardButton("👋 Привет!")
-    btn2 = types.KeyboardButton("Настроение")
-    markup.add(btn1, btn2)
-    bot.send_message(message.chat.id, mess, reply_markup=markup)
-
     conn = sqlite3.connect('moodbase.sql')
     cur = conn.cursor()
 
@@ -49,9 +41,13 @@ def start(message):
     cur.close()
     conn.close()
 
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton('Посмотреть моё настроение.', callback_data='mood'))
-    bot.send_message(message.chat.id, 'Записал твоё настроение.', reply_markup=markup)
+    
+    mess = f'Привет, {message.from_user.first_name}! Я бот-трекер настроения!'
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    btn1 = types.KeyboardButton("👋 Привет!")
+    btn2 = types.KeyboardButton("Настроение")
+    markup.add(btn1, btn2)
+    bot.send_message(message.chat.id, mess, reply_markup=markup)
 
 
 """Хендлер и функция для обработки нажатий кнопок."""

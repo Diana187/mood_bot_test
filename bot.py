@@ -16,7 +16,6 @@ def setup_database():
     cur.execute('CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY)')
     cur.execute("""CREATE TABLE IF NOT EXISTS mood_responses
                 (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id  INTEGER, response TEXT)""")
-    
 
     conn.commit()
     cur.close()
@@ -97,6 +96,7 @@ def handle_mood(call):
     cur.close()
     conn.close()
 
+"""Обработка ответа на нажатие кнопки 'показать настроение'."""
 def handle_show(message):
     bot.send_message(message.chat.id, 'Вот информация о твоём настроении:')
 
@@ -107,15 +107,28 @@ def handle_show(message):
 
     """Достаём ответы из базы данных."""
     cur.execute(f'SELECT response FROM mood_responses WHERE user_id={user_id}')
-    mood_responses = cur.fetchall()
+    mood_rows = cur.fetchall()
+    mood_responses = [row[0] for row in mood_rows]
 
-    mood_responses()
+    mood_responses_dict = {}
+    for response in mood_responses:
+        if response in mood_responses_dict:
+            mood_responses_dict[response] += 1
+        else:
+            mood_responses_dict[response] = 1
+    print(mood_responses_dict)
+    
+    bot.send_message(message.chat.id, str(mood_responses_dict))
+
+    # response_message = []
+    # for response in mood_responses:
+    #     response_message.append(f'{response[0]}\n')
+    # response_text = ''.join(response_message)
+
+    # bot.send_message(message.chat.id, response_text)
+
     cur.close()
     conn.close()
-
-def send_mood_count():
-
-    pass
 
 """Обработка callback-запроса."""
 @bot.callback_query_handler(func=lambda call:True)

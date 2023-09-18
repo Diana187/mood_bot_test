@@ -1,6 +1,9 @@
 import telebot
 import sqlite3
+from datetime import datetime
 from telebot import types
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 from config import API_TOKEN
@@ -12,14 +15,25 @@ def setup_database():
     conn = sqlite3.connect('moodbase.sql')
     cur = conn.cursor()
 
-    """Создаём таблицу 'moodbase.sql' с полями id, если она ещё не существует."""
+    """Создаём таблицу 'moodbase.sql' с полями id, date, если она ещё не существует."""
     cur.execute('CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY)')
     cur.execute("""CREATE TABLE IF NOT EXISTS mood_responses
-                (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id  INTEGER, response TEXT)""")
+                (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id  INTEGER, date DATE, response TEXT)""")
 
     conn.commit()
     cur.close()
     conn.close()
+
+# """Создание графика настроения при помощи библиотеки matplotlib."""
+# def mood_plot():
+#     x = np.linspace(0, 2 * np.pi, 200)
+#     y = np.sin(x)
+
+#     fig, ax = plt.subplots()
+#     ax.plot(x, y)
+#     plt.show()
+
+
 
 """Хендлер и функция для обработки команды /start"""
 @bot.message_handler(commands=['start'])
@@ -33,7 +47,6 @@ def start(message):
     cur.execute(f'SELECT * FROM users WHERE user_id={user_id}')
     users = cur.fetchall()
 
-    """???"""
     if len(users) == 0:
         cur.execute('INSERT INTO users (user_id) VALUES (?)', (user_id,))
 
@@ -88,9 +101,10 @@ def handle_mood(call):
 
     user_id = call.message.chat.id
     response = call.data
+    date = datetime.now()
 
-    """Записываем ответы в базу данных."""
-    cur.execute('INSERT INTO mood_responses (user_id, response) VALUES (?, ?)', (user_id, response))
+    """Записываем ответы и дату ответа в базу данных."""
+    cur.execute('INSERT INTO mood_responses (user_id, date, response) VALUES (?, ?, ?)', (user_id, date, response))
 
     conn.commit()
     cur.close()
@@ -106,26 +120,14 @@ def handle_show(message):
     user_id = message.chat.id
 
     """Достаём ответы из базы данных."""
-    cur.execute(f'SELECT response FROM mood_responses WHERE user_id={user_id}')
+    cur.execute(f'SELECT response, date FROM mood_responses WHERE user_id={user_id}')
     mood_rows = cur.fetchall()
     mood_responses = [row[0] for row in mood_rows]
+    dates = [row[1] for row in mood_rows]
 
-    mood_responses_dict = {}
-    for response in mood_responses:
-        if response in mood_responses_dict:
-            mood_responses_dict[response] += 1
-        else:
-            mood_responses_dict[response] = 1
-    print(mood_responses_dict)
+    table = f"{mood_responses[0]}: {dates[0]}"
     
-    bot.send_message(message.chat.id, str(mood_responses_dict))
-
-    # response_message = []
-    # for response in mood_responses:
-    #     response_message.append(f'{response[0]}\n')
-    # response_text = ''.join(response_message)
-
-    # bot.send_message(message.chat.id, response_text)
+    bot.send_message(message.chat.id, table)
 
     cur.close()
     conn.close()

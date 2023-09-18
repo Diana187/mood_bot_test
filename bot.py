@@ -122,12 +122,15 @@ def handle_show(message):
     """Достаём ответы из базы данных."""
     cur.execute(f'SELECT response, date FROM mood_responses WHERE user_id={user_id}')
     mood_rows = cur.fetchall()
-    mood_responses = [row[0] for row in mood_rows]
-    dates = [row[1] for row in mood_rows]
-
-    table = f"{mood_responses[0]}: {dates[0]}"
+    # mood_responses = [row[0] for row in mood_rows]
+    # dates = [row[1] for row in mood_rows]
     
-    bot.send_message(message.chat.id, table)
+    response_message = ''
+    for row in mood_rows:
+        mood_responses, dates = row[0], row[1]
+        response_message += f"{mood_responses}: {dates}\n"
+    
+    bot.send_message(message.chat.id, response_message)
 
     cur.close()
     conn.close()

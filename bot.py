@@ -24,15 +24,13 @@ def setup_database():
     cur.close()
     conn.close()
 
-# """Создание графика настроения при помощи библиотеки matplotlib."""
-# def mood_plot():
-#     x = np.linspace(0, 2 * np.pi, 200)
-#     y = np.sin(x)
+"""Создание графика настроения при помощи библиотеки matplotlib."""
+def mood_plot():
+    x = np.arange(0, 10, 0.1)
+    y = np.sin(x)
 
-#     fig, ax = plt.subplots()
-#     ax.plot(x, y)
-#     plt.show()
-
+    plt.plot(x, y)
+    plt.savefig('saved_figure.png')
 
 
 """Хендлер и функция для обработки команды /start"""

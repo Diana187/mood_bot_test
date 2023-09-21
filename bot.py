@@ -3,12 +3,18 @@ import sqlite3
 from datetime import datetime
 from telebot import types
 import matplotlib.pyplot as plt
-import numpy as np
+import matplotlib
 
 
 from config import API_TOKEN
 
 bot = telebot.TeleBot(API_TOKEN)
+
+MOOD_MAPPING = {
+    "good": 2,
+    "normal": 1,
+    "bad": 0,
+}
 
 def setup_database():
     """Создаём соединение и курсор."""
@@ -18,19 +24,19 @@ def setup_database():
     """Создаём таблицу 'moodbase.sql' с полями id, date, если она ещё не существует."""
     cur.execute('CREATE TABLE IF NOT EXISTS users (user_id INTEGER PRIMARY KEY)')
     cur.execute("""CREATE TABLE IF NOT EXISTS mood_responses
-                (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id  INTEGER, date DATE, response TEXT)""")
+                (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, date DATE, response INTEGER)""")
 
     conn.commit()
     cur.close()
     conn.close()
 
-"""Создание графика настроения при помощи библиотеки matplotlib."""
-def mood_plot():
-    x = np.arange(0, 10, 0.1)
-    y = np.sin(x)
+# """Создание графика настроения при помощи библиотеки matplotlib."""
+# def mood_plot():
+#     x = np.arange(0, 10, 0.1)
+#     y = np.sin(x)
 
-    plt.plot(x, y)
-    plt.savefig('saved_figure.png')
+#     plt.plot(x, y)
+#     plt.savefig('saved_figure.png')
 
 
 """Хендлер и функция для обработки команды /start"""
@@ -99,10 +105,11 @@ def handle_mood(call):
 
     user_id = call.message.chat.id
     response = call.data
+    response_int = MOOD_MAPPING[response]
     date = datetime.now()
 
     """Записываем ответы и дату ответа в базу данных."""
-    cur.execute('INSERT INTO mood_responses (user_id, date, response) VALUES (?, ?, ?)', (user_id, date, response))
+    cur.execute('INSERT INTO mood_responses (user_id, date, response) VALUES (?, ?, ?)', (user_id, date, response_int))
 
     conn.commit()
     cur.close()
@@ -120,17 +127,44 @@ def handle_show(message):
     """Достаём ответы из базы данных."""
     cur.execute(f'SELECT response, date FROM mood_responses WHERE user_id={user_id}')
     mood_rows = cur.fetchall()
-    
-    response_message = ''
-    for row in mood_rows:
-        mood_responses, dates = row[0], row[1]
-        formated_dates = datetime.fromisoformat(dates).strftime('%d, %B %Y')
-        response_message += f'{mood_responses}: {formated_dates}\n'
-    
-    bot.send_message(message.chat.id, response_message)
-
     cur.close()
     conn.close()
+    
+    date_scores = aggregate_dates(mood_rows)
+
+    filepath = create_mood_plot(date_scores)
+    bot.send_photo(message.chat.id, photo=open(filepath, 'rb'))
+
+    
+    
+    # aggregate_dates
+    # -> mood rows
+    # <- dates dict
+def aggregate_dates(mood_rows):
+    date_scores = {}
+    for row in mood_rows:
+        mood_response, raw_date = row[0], row[1]
+        date = datetime.fromisoformat(raw_date).date()
+        if date not in date_scores:
+            date_scores[date] = []
+        date_scores[date].append(mood_response)
+    return date_scores
+
+# create_mood_plot
+# -> date_scores dict
+# <- filepath
+def create_mood_plot(date_scores_dict):
+    matplotlib.use('agg')
+    x = date_scores_dict.keys()
+    y = [sum(date_scores_dict[date])/len(date_scores_dict[date]) for date in x]
+    plt.figure()
+    plt.plot(x, y)
+    filepath = '/tmp/fig.png'
+    plt.savefig(filepath)
+    plt.close()
+    return filepath
+
+    # bot.send_message(message.chat.id, response_message)
 
 """Обработка callback-запроса."""
 @bot.callback_query_handler(func=lambda call:True)

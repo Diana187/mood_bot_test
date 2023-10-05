@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  bot:
+    build: ..
+    image: moodbot:latest
+    command: python bot.py
+    volumes:
+      - ../moodbase.sql:/app/moodbase.sql
